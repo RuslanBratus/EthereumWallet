@@ -17,8 +17,8 @@ import org.web3j.utils.Convert.Unit ;
 
 private const val infuraURL = "https://rinkeby.infura.io/v3/fb03c724108c40f3a2b202ea3a3243c4"
 //private const val infuraURL = "https://mainnet.infura.io/v3/5d0cad45588d4eeca02e0b1d29a8e37a"
-//private const val ethAddress = "33cf1e58744993f3ef7e6d5153e0c1f6e4c484a547a3d2a1c7724af2ff01c2be"
-private const val ethAddress = "0ee4282d6b2b9673a9286fa2cd4d3563085ea507e0e6ea17dcd346f215131267"
+private const val ethAddress = "33cf1e58744993f3ef7e6d5153e0c1f6e4c484a547a3d2a1c7724af2ff01c2be"
+//private const val ethAddress = "0ee4282d6b2b9673a9286fa2cd4d3563085ea507e0e6ea17dcd346f215131267"
 
 
 class LoginFragment : Fragment() {
