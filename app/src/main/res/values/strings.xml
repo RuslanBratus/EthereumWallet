@@ -2,4 +2,9 @@
     <string name="app_name">EthereumWallet</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="input_your_ethereum_account_key">Input your Ethereum account key</string>
+    <string name="input_your_ethereum_account_address">Input your Ethereum account address</string>
+    <string name="input_your_ethereum_address">Input your Ethereum address</string>
+    <string name="error_ethereum_address">Wrong Ethereum account address</string>
+    <string name="login">Login</string>
 </resources>

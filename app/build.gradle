@@ -36,10 +36,13 @@ android {
 
 dependencies {
 
+
+
     //org.web3j
     //apply plugin: 'org.web3j'
     //apply plugin: 'com.android.application:com.android.application.org.web3j'
     implementation ('org.web3j:core:4.9.4')
+    implementation("dev.icerock.moko:web3:0.2.0")
 
 
 
