@@ -1,6 +1,7 @@
 package com.example.ethereumwallet.fragments.main.viewmodel
 
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
@@ -10,23 +11,35 @@ import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.http.HttpService
 import org.web3j.utils.Convert.Unit
 import org.web3j.utils.Convert
+import java.math.BigDecimal
+import com.example.ethereumwallet.utils.Utils.Companion.infuraURL
 
-private const val infuraURL = "https://rinkeby.infura.io/v3/fb03c724108c40f3a2b202ea3a3243c4"
 
-class MainViewModel(private val ethAddress: String): ViewModel() {
-    ////@TODO private lateinit var accountInfoAndOthers : EthereumAccount
-    //@TODO Live Data + observe from Fragment to load data in proper view
+class MainViewModel(private val privateKey: String): ViewModel() {
+    private lateinit var client : Web3j
+    private lateinit var credentials: Credentials
+    private var _balance = MutableLiveData(BigDecimal(0.0))
+    val balance get() = _balance
+    private lateinit var _address : String
+    val address get() = _address
 
     fun requestData() = viewModelScope.launch {
-        //@TODO Тут поставити 1 клас, який вміщуватиме усю інфу про наш аккаунт (Глянути, можливо уже є готові класи від web3j
-        //@TODO Також глянути, чи отримуємо ми за допомогою getBalance WEI чи GWEI! Відповідь: Залежить від метода. чекнути на сайті.
+
+        client  = Web3j.build(
+            HttpService(
+                infuraURL
+            )
+        )
+
+        credentials = Credentials.create(privateKey)
+        _address = credentials.address
+
+        forTests()
+
+
 
         CoroutineScope(Dispatchers.Default).launch {
-            Log.i("coroutines", "Line#41")
-            val balance = GlobalScope.async { getBalance() }
-            //GlobalScope.async { whileForever() }
-            Log.i("coroutines", "Line#43")
-
+            GlobalScope.async { getBalance() }
         }
 
 
@@ -34,17 +47,12 @@ class MainViewModel(private val ethAddress: String): ViewModel() {
 
 
     private fun getBalance() {
-        val client = Web3j.build(
-            HttpService(
-                infuraURL
-            )
-        )
-
-        val credentials: Credentials = Credentials.create(ethAddress)
-
-
-        Log.i("eth","Balance: " + Convert.fromWei(client.ethGetBalance(credentials.address, DefaultBlockParameterName.LATEST).send().balance.toString(), Unit.ETHER))
-
+        _balance.postValue(Convert.fromWei(client.ethGetBalance(credentials.address, DefaultBlockParameterName.LATEST).send().balance.toString(), Unit.ETHER))
     }
+
+    private fun forTests() {
+        Log.i("current user info", "credentials.address = ${credentials.address}")
+    }
+
 
 }

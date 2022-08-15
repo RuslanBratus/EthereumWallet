@@ -7,4 +7,16 @@
     <string name="input_your_ethereum_address">Input your Ethereum address</string>
     <string name="error_ethereum_address">Wrong Ethereum account address</string>
     <string name="login">Login</string>
+    <string name="eth">ETH</string>
+    <string name="settings">Settings</string>
+    <string name="send">Send</string>
+    <string name="transfer_money">Transfer Money</string>
+    <string name="enter_the_recipient_address">Enter the recipient address</string>
+    <string name="input_your_private_key">Input your private key</string>
+    <string name="input_sum_of_money_in_eth">Input sum of money in ETH</string>
+    <string name="wrong_amount_of_eth">Wrong amount of money in ETH</string>
+    <string name="error_bigger_sum_than_balance">Sum of money should not be bigger than your current balance</string>
+    <string name="error_sum_less_zero">Sum of money should not be zero or less</string>
+    <string name="wrong_private_key">Wrong Ethereum private key</string>
+    <string name="confirm">Confirm</string>
 </resources>

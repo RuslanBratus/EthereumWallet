@@ -29,14 +29,14 @@
         android:layout_marginBottom="100dp">
 
         <EditText
-            android:id="@+id/addressInput"
+            android:id="@+id/privateKeyInput"
             android:layout_width="250dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:background="@color/white"
             android:inputType="text"
             android:autofillHints="Address"
-            android:hint="@string/input_your_ethereum_address"
+            android:hint="@string/input_your_private_key"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
             android:singleLine="true"
