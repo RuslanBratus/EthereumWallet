@@ -27,5 +27,9 @@
         android:id="@+id/transferFragment"
         android:name="com.example.ethereumwallet.fragments.transfer.TransferFragment"
         android:label="fragment_transfer"
-        tools:layout="@layout/fragment_transfer" />
+        tools:layout="@layout/fragment_transfer" >
+        <action
+            android:id="@+id/action_transferFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
 </navigation>

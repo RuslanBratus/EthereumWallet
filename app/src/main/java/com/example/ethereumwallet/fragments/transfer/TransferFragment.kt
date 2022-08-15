@@ -1,21 +1,26 @@
 package com.example.ethereumwallet.fragments.transfer
 
 import android.app.AlertDialog
-import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.core.view.isGone
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import com.example.ethereumwallet.R
 import com.example.ethereumwallet.databinding.FragmentTransferBinding
 import com.example.ethereumwallet.fragments.transfer.viewmodel.TransferViewModel
 import com.example.ethereumwallet.utils.Utils.Companion.ignoreCaseAddrPattern
 import com.example.ethereumwallet.utils.Utils.Companion.lowerCaseAddrPattern
 import com.example.ethereumwallet.utils.Utils.Companion.upperCaseAddrPattern
+import com.example.ethereumwallet.utils.Utils.Companion.loadingGiffLink
+import kotlinx.coroutines.*
 import java.math.BigDecimal
 
 
@@ -23,16 +28,18 @@ class TransferFragment : Fragment() {
     private var _binding: FragmentTransferBinding? = null
     private val binding get() = _binding
     private lateinit var mViewModel: TransferViewModel
-    private lateinit var accountAddress: String
+    private lateinit var privateKey: String
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTransferBinding.bind(view)
 
-        accountAddress = requireArguments().getString("privateKey")!!
+        privateKey = requireArguments().getString("privateKey")!!
 
-        mViewModel = TransferViewModel(accountAddress)
+        mViewModel = TransferViewModel(privateKey)
+        binding!!.addressText.addTextChangedListener(MyTextWatcher(binding!!.addressText))
+        binding!!.amountOfMoneyText.addTextChangedListener(MyTextWatcher(binding!!.amountOfMoneyText))
 
         setData()
 
@@ -47,10 +54,7 @@ class TransferFragment : Fragment() {
                     .setTitle("Transfer info:")
                     .setMessage("Sum of ETH: $sumOfETH\n\nRecipient address: $recipientAccountAddress")
                     .setPositiveButton(R.string.confirm) { _, _ ->
-                        mViewModel.transferETH(
-                            recipientAccountAddress = recipientAccountAddress,
-                            sumOfETH = sumOfETH
-                        )
+                        transferETH(recipientAccountAddress = recipientAccountAddress, sumOfETH = sumOfETH)
                     }
                     .setNegativeButton(android.R.string.cancel) { _, _ -> }
 
@@ -60,6 +64,59 @@ class TransferFragment : Fragment() {
         }
 
 
+
+
+    }
+
+    private fun transferETH(recipientAccountAddress: String, sumOfETH: BigDecimal) {
+        try {
+            //@TODO I should replays this trash with implementation another way to open new screen and don't kill coroutine processes
+            //@TODO but I didn't find it so left it like that.
+
+            binding!!.amountOfMoneyText.isGone = true
+            binding!!.sumLayout.isGone = true
+            binding!!.addressLayout .isGone = true
+            binding!!.balanceText.isGone = true
+            binding!!.recipientAddressInput.isGone = true
+            binding!!.amountOfMoneyText.isGone = true
+            binding!!.qrcodeScanImage .isGone = true
+            binding!!.addressText.isGone = true
+            binding!!.ethText.isGone = true
+
+            Glide.with(requireContext()).load(loadingGiffLink)
+                .into(binding!!.sendImage)
+
+            val isTransferSuccessful = mViewModel.transferETH(recipientAccountAddress = recipientAccountAddress, sumOfETH = sumOfETH)
+
+            if (isTransferSuccessful) {
+                binding!!.sendImage .isGone = true
+                Toast.makeText(requireContext(), "Transfer was successful", Toast.LENGTH_LONG).show()
+                CoroutineScope(Dispatchers.Default).launch {
+                    delay(500)
+                    val bundle = Bundle()
+                    bundle.putString("privateKey", privateKey)
+                    findNavController().navigate(R.id.action_transferFragment_to_mainFragment, bundle)
+                }
+            }
+            else {
+                Toast.makeText(requireContext(), "Oops.. Something went wrong", Toast.LENGTH_LONG).show()
+                CoroutineScope(Dispatchers.Default).launch {
+                    delay(500)
+                    val bundle = Bundle()
+                    bundle.putString("privateKey", privateKey)
+                    findNavController().navigate(R.id.action_transferFragment_to_mainFragment, bundle)
+                }
+            }
+
+        }catch (e: Exception) {
+            Toast.makeText(requireContext(), "Oops.. Something went wrong", Toast.LENGTH_LONG).show()
+            CoroutineScope(Dispatchers.Default).launch {
+                delay(500)
+                val bundle = Bundle()
+                bundle.putString("privateKey", privateKey)
+                findNavController().navigate(R.id.action_transferFragment_to_mainFragment, bundle)
+            }
+        }
 
 
     }
@@ -89,6 +146,11 @@ class TransferFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_transfer, container, false)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
 
