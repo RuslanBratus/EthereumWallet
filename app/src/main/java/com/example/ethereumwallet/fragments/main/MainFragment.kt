@@ -3,6 +3,7 @@ package com.example.ethereumwallet.fragments.main
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -28,9 +29,48 @@ class MainFragment : Fragment() {
 
         _binding = FragmentMainBinding.bind(view)
 
+
+
         privateKey = requireArguments().getString("privateKey")!!
 
         mViewModel = MainViewModel(privateKey)
+
+        binding!!.swipeRefresh.setColorSchemeResources(R.color.purple_500)
+        binding!!.swipeRefresh.setOnRefreshListener {
+            if (checkInternetConnection()) {
+                mViewModel.requestData()
+
+                if (binding!!.balanceText.text.toString().isEmpty()) {
+                    setObservers()
+                }
+
+                if (binding!!.addressText.text.toString().isEmpty()) {
+                    val address = mViewModel.address
+                    val formattedAddress = (address.subSequence(0, 5).toString() + "..." + address.subSequence(
+                        address.length - 5,
+                        address.length - 1
+                    ))
+
+                    binding!!.addressText.text = formattedAddress
+
+                }
+            }
+            else
+            {
+                Toast.makeText(requireContext(), "Please, turn on your Network connection", Toast.LENGTH_LONG).show()
+            }
+
+            //@TODO can be better.. down. Single value observer?
+
+            val balanceObserver = Observer<BigDecimal> { _ ->
+                binding!!.swipeRefresh.isRefreshing = false
+            }
+
+            mViewModel.balance.observe(viewLifecycleOwner, balanceObserver)
+
+        }
+
+
 
         binding!!.copyAddressImage.setOnClickListener {
             val clipboard: ClipboardManager = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -45,12 +85,38 @@ class MainFragment : Fragment() {
                 findNavController().navigate(R.id.action_mainFragment_to_transferFragment, bundle)
         }
 
+        binding!!.settingsImage.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
+        }
 
-        setData()
+
+        if (checkInternetConnection()) {
+            setData()
+        }
+        else
+        {
+            Toast.makeText(requireContext(), "Please, turn on your Network connection", Toast.LENGTH_LONG).show()
+        }
 
 
 
 
+
+
+    }
+
+    private fun checkInternetConnection(): Boolean {
+        val cm = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        var wifiInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
+        if (wifiInfo != null && wifiInfo.isConnected) {
+            return true
+        }
+        wifiInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE)
+        if (wifiInfo != null && wifiInfo.isConnected) {
+            return true
+        }
+        wifiInfo = cm.activeNetworkInfo
+        return wifiInfo != null && wifiInfo.isConnected
     }
 
     private fun setData() {

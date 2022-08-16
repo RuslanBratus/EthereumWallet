@@ -1,18 +1,25 @@
 package com.example.ethereumwallet.fragments.transfer
 
+import android.app.Activity
 import android.app.AlertDialog
+import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.SparseArray
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.util.valueIterator
 import androidx.core.view.isGone
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.ethereumwallet.R
 import com.example.ethereumwallet.databinding.FragmentTransferBinding
 import com.example.ethereumwallet.fragments.transfer.viewmodel.TransferViewModel
@@ -20,6 +27,10 @@ import com.example.ethereumwallet.utils.Utils.Companion.ignoreCaseAddrPattern
 import com.example.ethereumwallet.utils.Utils.Companion.lowerCaseAddrPattern
 import com.example.ethereumwallet.utils.Utils.Companion.upperCaseAddrPattern
 import com.example.ethereumwallet.utils.Utils.Companion.loadingGiffLink
+import com.example.ethereumwallet.utils.Utils.Companion.REQUEST_IMAGE_CAPTURE
+import com.google.android.gms.vision.Frame
+import com.google.android.gms.vision.barcode.Barcode
+import com.google.android.gms.vision.barcode.BarcodeDetector
 import kotlinx.coroutines.*
 import java.math.BigDecimal
 
@@ -29,9 +40,11 @@ class TransferFragment : Fragment() {
     private val binding get() = _binding
     private lateinit var mViewModel: TransferViewModel
     private lateinit var privateKey: String
+    private lateinit var detector : BarcodeDetector
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTransferBinding.bind(view)
 
@@ -41,7 +54,13 @@ class TransferFragment : Fragment() {
         binding!!.addressText.addTextChangedListener(MyTextWatcher(binding!!.addressText))
         binding!!.amountOfMoneyText.addTextChangedListener(MyTextWatcher(binding!!.amountOfMoneyText))
 
+        binding!!.qrcodeScanImage.setOnClickListener {
+            startCamera()
+        }
+
         setData()
+
+
 
 
 
@@ -62,14 +81,16 @@ class TransferFragment : Fragment() {
                 dialog.show()
             }
         }
-
-
-
-
     }
 
-    private fun transferETH(recipientAccountAddress: String, sumOfETH: BigDecimal) {
-        try {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        buildQrDetector()
+    }
+
+    private fun transferETH(recipientAccountAddress: String, sumOfETH: BigDecimal)  {
+
+
             //@TODO I should replays this trash with implementation another way to open new screen and don't kill coroutine processes
             //@TODO but I didn't find it so left it like that.
 
@@ -83,40 +104,71 @@ class TransferFragment : Fragment() {
             binding!!.addressText.isGone = true
             binding!!.ethText.isGone = true
 
-            Glide.with(requireContext()).load(loadingGiffLink)
-                .into(binding!!.sendImage)
 
-            val isTransferSuccessful = mViewModel.transferETH(recipientAccountAddress = recipientAccountAddress, sumOfETH = sumOfETH)
+        Glide.with(requireContext())
+            .load(loadingGiffLink)
+            .override(300, 300)
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .into(binding!!.sendImage)
 
-            if (isTransferSuccessful) {
-                binding!!.sendImage .isGone = true
-                Toast.makeText(requireContext(), "Transfer was successful", Toast.LENGTH_LONG).show()
-                CoroutineScope(Dispatchers.Default).launch {
-                    delay(500)
-                    val bundle = Bundle()
-                    bundle.putString("privateKey", privateKey)
-                    findNavController().navigate(R.id.action_transferFragment_to_mainFragment, bundle)
-                }
-            }
-            else {
-                Toast.makeText(requireContext(), "Oops.. Something went wrong", Toast.LENGTH_LONG).show()
-                CoroutineScope(Dispatchers.Default).launch {
-                    delay(500)
-                    val bundle = Bundle()
-                    bundle.putString("privateKey", privateKey)
-                    findNavController().navigate(R.id.action_transferFragment_to_mainFragment, bundle)
-                }
-            }
 
-        }catch (e: Exception) {
-            Toast.makeText(requireContext(), "Oops.. Something went wrong", Toast.LENGTH_LONG).show()
+
+
+        try {
             CoroutineScope(Dispatchers.Default).launch {
-                delay(500)
+                val transferResult = GlobalScope.async {
+                    mViewModel.transferETH(
+                        recipientAccountAddress = recipientAccountAddress,
+                        sumOfETH = sumOfETH
+                    )
+                }
+
+                if (transferResult.await()) {
+                    requireActivity().runOnUiThread {
+                        Toast.makeText(
+                            requireContext(),
+                            "Transfer was successful",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        val bundle = Bundle()
+
+                        bundle.putString("privateKey", privateKey)
+                        findNavController().navigate(
+                            R.id.action_transferFragment_to_mainFragment,
+                            bundle
+                        )
+                    }
+
+                } else {
+                    requireActivity().runOnUiThread {
+                        Toast.makeText(
+                            requireContext(),
+                            "Oops.. Something went wrong",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        val bundle = Bundle()
+                        bundle.putString("privateKey", privateKey)
+                        findNavController().navigate(
+                            R.id.action_transferFragment_to_mainFragment,
+                            bundle
+                        )
+                    }
+
+                }
+            }
+        }
+        catch (e: Exception) {
+            requireActivity().runOnUiThread {
+                Toast.makeText(requireContext(), "Oops.. Something went wrong", Toast.LENGTH_LONG).show()
                 val bundle = Bundle()
                 bundle.putString("privateKey", privateKey)
                 findNavController().navigate(R.id.action_transferFragment_to_mainFragment, bundle)
             }
         }
+
+
 
 
     }
@@ -189,7 +241,7 @@ class TransferFragment : Fragment() {
 
     private fun validateSumOfMoney() : Boolean {
         val textMoney = binding!!.amountOfMoneyText.text.toString()
-        var money : BigDecimal
+        val money : BigDecimal
         try {
             money = textMoney.toBigDecimal()
             if (money <= BigDecimal(0)) {
@@ -209,5 +261,48 @@ class TransferFragment : Fragment() {
             return false
         }
     }
+
+
+    private fun startCamera() {
+        dispatchTakePictureIntent()
+    }
+
+    private fun dispatchTakePictureIntent() {
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            takePictureIntent.resolveActivity(requireContext().packageManager)?.also {
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+            }
+        }
+    }
+
+    private fun buildQrDetector() {
+        detector = BarcodeDetector.Builder(requireContext())
+            .setBarcodeFormats(Barcode.QR_CODE)
+//            .setBarcodeFormats(Barcode.ALL_FORMATS)
+            .build()
+
+
+    }
+
+
+
+    private fun detectQrCode(image: Bitmap) {
+        if(!detector.isOperational){
+            return
+        }
+        val frame: Frame = Frame.Builder().setBitmap(image).build()
+        val barcodes: SparseArray<Barcode> = detector.detect(frame)
+        barcodes.valueIterator().forEach { barcode ->
+            binding!!.recipientAddressInput.setText(barcode.rawValue.toString())
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
+            val imageBitmap = data?.extras?.get("data") as Bitmap
+            detectQrCode(imageBitmap)
+        }
+    }
+
 
 }

@@ -52,11 +52,13 @@ class TransferViewModel(private val privateKey: String): ViewModel() {
     }
 
     @Throws(IOException::class)
-    fun transferETH(recipientAccountAddress: String, sumOfETH: BigDecimal): Boolean = runBlocking {
+    fun transferETH(recipientAccountAddress: String, sumOfETH: BigDecimal) : Boolean = runBlocking {
+    //fun transferETH(callBack : TransferCallBack, recipientAccountAddress: String, sumOfETH: BigDecimal)  {
 
+        //CoroutineScope(Dispatchers.Default).launch {
 
             val ethGetTransactionCount = async { getTransactionCount() }
-            val nonce: BigInteger =  ethGetTransactionCount.await().transactionCount
+            val nonce: BigInteger = ethGetTransactionCount.await().transactionCount
             val value: BigInteger = Convert.toWei(sumOfETH, Unit.ETHER).toBigInteger()
 
 
@@ -75,10 +77,10 @@ class TransferViewModel(private val privateKey: String): ViewModel() {
             )
 
 
-
             // Sign the transaction
-            val signedMessage = async { TransactionEncoder.signMessage(rawTransaction, credentials) }
-            val hexValue  = Numeric.toHexString(signedMessage.await())
+            val signedMessage =
+                async { TransactionEncoder.signMessage(rawTransaction, credentials) }
+            val hexValue = Numeric.toHexString(signedMessage.await())
 
             // Send transaction
             val ethSendTransaction = async { sendRawTransaction(hexValue) }
@@ -88,7 +90,7 @@ class TransferViewModel(private val privateKey: String): ViewModel() {
             // Wait for transaction to be mined
             val isTransactionSuccessful = async { getTransactionMining(transactionHash) }
 
-            return@runBlocking isTransactionSuccessful.await()
+        return@runBlocking isTransactionSuccessful.await()
     }
 
     private fun getTransactionMining(transactionHash: String): Boolean {
@@ -106,6 +108,8 @@ class TransferViewModel(private val privateKey: String): ViewModel() {
                 }
                 Thread.sleep(3000)
             }
+
+
     }
 
     private fun sendRawTransaction(hexValue: String): EthSendTransaction {

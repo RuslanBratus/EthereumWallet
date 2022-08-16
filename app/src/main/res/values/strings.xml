@@ -19,4 +19,5 @@
     <string name="error_sum_less_zero">Sum of money should not be zero or less</string>
     <string name="wrong_private_key">Wrong Ethereum private key</string>
     <string name="confirm">Confirm</string>
+    <string name="private_key">privateKey</string>
 </resources>

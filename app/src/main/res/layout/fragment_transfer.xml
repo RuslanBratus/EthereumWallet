@@ -20,7 +20,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/transfer_money"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="22sp"
         app:layout_constraintStart_toStartOf="@id/topPanel"
         app:layout_constraintEnd_toEndOf="@id/topPanel"

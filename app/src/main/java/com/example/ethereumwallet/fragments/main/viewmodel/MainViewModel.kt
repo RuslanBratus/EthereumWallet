@@ -1,6 +1,5 @@
 package com.example.ethereumwallet.fragments.main.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,35 +23,44 @@ class MainViewModel(private val privateKey: String): ViewModel() {
     val address get() = _address
 
     fun requestData() = viewModelScope.launch {
-
-        client  = Web3j.build(
-            HttpService(
-                infuraURL
-            )
-        )
-
-        credentials = Credentials.create(privateKey)
-        _address = credentials.address
-
-        forTests()
-
-
+        setClient()
 
         CoroutineScope(Dispatchers.Default).launch {
-            GlobalScope.async { getBalance() }
+            async { getBalance() }
         }
 
+    }
 
+    private fun setClient() {
+
+        if (!this::client.isInitialized) {
+            client = Web3j.build(
+                HttpService(
+                    infuraURL
+                )
+            )
+
+            credentials = Credentials.create(privateKey)
+            _address = credentials.address
+        }
     }
 
 
     private fun getBalance() {
-        _balance.postValue(Convert.fromWei(client.ethGetBalance(credentials.address, DefaultBlockParameterName.LATEST).send().balance.toString(), Unit.ETHER))
+
+        if (this::client.isInitialized) {
+            _balance.postValue(
+                Convert.fromWei(
+                    client.ethGetBalance(
+                        credentials.address,
+                        DefaultBlockParameterName.LATEST
+                    ).send().balance.toString(), Unit.ETHER
+                )
+            )
+        }
     }
 
-    private fun forTests() {
-        Log.i("current user info", "credentials.address = ${credentials.address}")
-    }
+
 
 
 }

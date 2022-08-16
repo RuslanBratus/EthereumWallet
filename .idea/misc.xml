@@ -5,7 +5,8 @@
       <map>
         <entry key="..\:/EthereumWallet/app/src/main/res/layout/activity_main.xml" value="0.27717391304347827" />
         <entry key="..\:/EthereumWallet/app/src/main/res/layout/fragment_login.xml" value="0.22" />
-        <entry key="..\:/EthereumWallet/app/src/main/res/layout/fragment_main.xml" value="0.1578125" />
+        <entry key="..\:/EthereumWallet/app/src/main/res/layout/fragment_main.xml" value="0.22" />
+        <entry key="..\:/EthereumWallet/app/src/main/res/layout/fragment_settings.xml" value="0.15520833333333334" />
         <entry key="..\:/EthereumWallet/app/src/main/res/layout/fragment_transfer.xml" value="0.15172101449275363" />
         <entry key="..\:/EthereumWallet/app/src/main/res/layout/fragment_transfer_progress.xml" value="0.15520833333333334" />
       </map>
